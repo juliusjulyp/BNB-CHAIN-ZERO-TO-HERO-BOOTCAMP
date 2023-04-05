@@ -1,0 +1,21 @@
+// creating a badger coin contract in solidity
+
+// SPDX-License-Identifier: MIT
+
+// Specifying the version of the Solidity compiler to use
+pragma solidity ^0.8.9;
+
+// Importing the ERC20 and Ownable contracts from the OpenZeppelin library
+import "@openzeppelin/contracts@4.8.2/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
+
+// Defining the BadgerCoin contract, which extends the ERC20 and Ownable contracts
+contract BadgerCoin is ERC20, Ownable {
+    
+    // Defining the constructor function, which sets the name and symbol of the token and mints tokens to the contract owner
+    constructor() ERC20("BadgerCoin", "BC") {
+        
+        // Minting 1,000,000 tokens to the contract deployer and seting the number of decimals to 18
+        _mint(msg.sender, 1000000 * 10**decimals());
+    }
+}
