@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";  // The OpenZeppelin library is imported but not used
+contract BadLotteryGame {
+    uint256 public prizeAmount;         // payout amount
+    address payable[] public players;   // List of players, could be too large and cause the contract to run out of gas
+    uint256 public num_players;         // Number of players
+    address payable[] public prize_winners; // List of winners, potential vulnerability to attackers
+    event winnersPaid(uint256);
+
+    // The constructor is set to empty, there's no owner
+    constructor() {}
+
+    // Anyone can add a new player hence a vulnerability
+    function addNewPlayer(address payable _playerAddress) public payable {
+        if (msg.value == 500000) {
+            players.push(_playerAddress);  // No proper validation for _playerAddress, a malicious contract address could be inserted
+        }
+        num_players++;
+        if (num_players > 50) {
+            emit winnersPaid(prizeAmount); // No check to ensure that the prize money has not already been distributed
+        }
+    }
+
+    function pickWinner(address payable _winner) public {
+        if ( block.timestamp % 15 == 0){    // Use timestamp for random number, which is a weak source of randomness and could be manipulated
+            prize_winners.push(_winner);   // Potential vulnerability to attackers
+        }          
+    }
+
+    function payout() public {
+        if (address(this).balance == 500000 * 100) { // No check to ensure that the prize money has not already been distributed
+            uint256 amountToPay = prize_winners.length / 100;
+            distributePrize(amountToPay);
+        }
+    }
+
+    function distributePrize(uint256 _amount) public {
+        for (uint256 i = 0; i <= prize_winners.length; i++) { // Bug in the loop that distributes the funds, which will cause the last element in the array to be set to 0x0 and the transfer function will fail for that address
+            prize_winners[i].transfer(_amount); // No check to ensure that _amount is greater than zero
+        }
+    }
+}
+
+
+
+
+
+
+// // SPDX-License-Identifier: MIT
+// pragma solidity ^0.8.4;
+
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+// contract LotteryGame {
+//     uint256 public prizeAmount;
+//     address payable[] public players;
+//     uint256 public num_players;
+//     mapping(address => bool) public hasParticipated;
+//     address payable[] public prize_winners;
+//     event winnersPaid(uint256);
+
+//     constructor() {}
+
+//     function addNewPlayer(address payable _playerAddress) public payable {
+//         require(msg.value == 500000, "Must send exact amount to participate.");
+//         require(!hasParticipated[_playerAddress], "Player has already participated.");
+//         players.push(_playerAddress);
+//         num_players++;
+//         hasParticipated[_playerAddress] = true;
+//     }
+
+//     function pickWinner(address payable _winner) public {
+//         require(prize_winners.length < 10, "Max number of winners already reached.");
+//         require(hasParticipated[_winner], "Winner must have participated in the game.");
+//         prize_winners.push(_winner);
+//     }
+
+//     function payout() public {
+//         require(prize_winners.length > 0, "No winners have been selected.");
+//         require(address(this).balance == 5000000, "Prize money has not been reached.");
+//         uint256 amountToPay = prizeAmount / prize_winners.length;
+//         for (uint256 i = 0; i < prize_winners.length; i++) {
+//             prize_winners[i].transfer(amountToPay);
+//         }
+//         emit winnersPaid(amountToPay * prize_winners.length);
+//         prize_winners = new address payable[](0);
+//         players = new address payable[](0);
+//         num_players = 0;
+//         prizeAmount = 0;
+//     }
+// }
